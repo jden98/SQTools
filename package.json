@@ -1,6 +1,7 @@
 {
   "name": "companion-module-sq-md-control",
   "version": "0.3.0",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "description": "SQ MD input patch and variable-driven mute controller",

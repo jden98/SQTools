@@ -1,0 +1,25 @@
+{
+  "id": "sq-md-control",
+  "name": "SQ MD Control",
+  "shortname": "SQ MD",
+  "description": "Variable-driven MD vocal/talk patch and pedal mute control",
+  "version": "0.2.0",
+  "manufacturer": "Custom",
+  "products": [
+    "SQ5",
+    "SQ6",
+    "SQ7"
+  ],
+  "keywords": [
+    "Allen Heath",
+    "SQ",
+    "input patch",
+    "MD"
+  ],
+  "runtime": {
+    "type": "node18",
+    "api": "nodejs-ipc",
+    "apiVersion": "1.12.0",
+    "entrypoint": "main.js"
+  }
+}

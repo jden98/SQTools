@@ -1,0 +1,22 @@
+{
+  "name": "companion-module-sq-md-control",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "SQ MD input patch and variable-driven mute controller",
+  "main": "main.js",
+  "scripts": {
+    "test": "node --test",
+    "build": "companion-module-build"
+  },
+  "dependencies": {
+    "@companion-module/base": "^1.12.0",
+    "@allen-heath-sq-tools/api": "0.1.1"
+  },
+  "devDependencies": {
+    "@companion-module/tools": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

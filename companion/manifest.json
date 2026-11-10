@@ -7,7 +7,7 @@
   "name": "SQ MD Control",
   "shortname": "SQ MD",
   "description": "SQ input patching and variable-driven MD mute control",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "maintainers": [],
   "legacyIds": [],
   "runtime": {

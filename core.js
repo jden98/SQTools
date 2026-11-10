@@ -12,9 +12,35 @@ export function mdNumber(value) {
   return n
 }
 export class MDController {
-  constructor(adapter, initial = [{input:3,output:47},{input:2,output:48}]) {
+  constructor(adapter, initial = [{input:3,output:47},{input:2,output:48}], physicalInputs = Array(48).fill(null)) {
     this.adapter = adapter
     this.md = initial.map(x=>({ input: channelNumber(x.input), output: channelNumber(x.output), active:false, wasMuted:null }))
+    this.physicalInputs = Array(48).fill(null)
+    this.setPhysicalInputs(physicalInputs)
+  }
+  getPhysicalInput(channel) { return this.physicalInputs[channelNumber(channel)-1] }
+  setPhysicalInputs(values) {
+    if (!Array.isArray(values) || values.length !== 48) throw new Error('Expected physical mappings for all 48 input channels')
+    const next = values.map(value=>value===null || value===undefined || String(value).trim()==='' ? null : channelNumber(value,'LOCAL source'))
+    for (let i=0;i<48;i++) {
+      if (next[i]!==this.physicalInputs[i]) this.requireMappingEditable(i+1)
+    }
+    this.physicalInputs = next
+  }
+  requireMappingEditable(channel) {
+    if (this.md.some(m=>m.active && (m.input===channel || m.output===channel))) throw new Error(`CH${channel} is in use by a held MD pedal; release before changing its physical mapping`)
+  }
+  setPhysicalInput(channel, sourceSocket) {
+    const ch = channelNumber(channel)
+    const source = sourceSocket===null ? null : channelNumber(sourceSocket,'LOCAL source')
+    this.requireMappingEditable(ch)
+    this.physicalInputs[ch-1] = source
+    return source
+  }
+  sourceFor(input, sourceSocket) {
+    const source = sourceSocket===null ? this.getPhysicalInput(input) : channelNumber(sourceSocket,'LOCAL source')
+    if (source===null) throw new Error(`CH${input} physical input unknown; set its LOCAL mapping or enter an explicit source socket`)
+    return source
   }
   assign(which, field, value) {
     const idx = mdNumber(which)-1, n=channelNumber(value, field)
@@ -27,8 +53,11 @@ export class MDController {
   patch(which, sourceSocket = null) {
     const m=this.md[mdNumber(which)-1]
     if (m.active) throw new Error('Cannot repatch while pedal is held')
-    const source=sourceSocket===null ? m.input : channelNumber(sourceSocket,'LOCAL source')
+    if (m.input===m.output) throw new Error('Vocal and talk channels must differ')
+    this.requireMappingEditable(m.output)
+    const source=this.sourceFor(m.input,sourceSocket)
     this.adapter.patchLocal(source,m.output)
+    this.physicalInputs[m.output-1] = source
     return {source,output:m.output}
   }
   assignInputAndPatch(which, inputChannel, sourceSocket = null) {
@@ -36,13 +65,23 @@ export class MDController {
     const m = this.md[idx]
     if (m.active) throw new Error(`MD${which} pedal is held; release before changing assignment`)
     const input = channelNumber(inputChannel, 'input channel')
-    const source = sourceSocket === null ? input : channelNumber(sourceSocket, 'LOCAL source')
+    const source = this.sourceFor(input, sourceSocket)
     if (input === m.output) throw new Error('Vocal and talk channels must differ')
+    this.requireMappingEditable(m.output)
     // Only commit the new assignment after the patch command has been issued successfully.
     // The SQ protocol does not acknowledge application of the patch: verify on the console.
     this.adapter.patchLocal(source, m.output)
     m.input = input
+    this.physicalInputs[m.output-1] = source
     return {input, source, output:m.output}
+  }
+  press(which) {
+    if (this.get(which).active) {
+      this.up(which)
+      return 'released'
+    }
+    this.down(which)
+    return 'activated'
   }
   down(which) {
     const m=this.md[mdNumber(which)-1]
